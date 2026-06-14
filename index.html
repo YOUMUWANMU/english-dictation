@@ -156,7 +156,7 @@ input:checked+.toggle-slider:before{transform:translateX(20px)}
     <p class="section-title">朗读设置</p>
     <div class="setting-row">
       <span class="setting-label">朗读语音</span>
-      <select id="voice-sel2"></select>
+      
     </div>
     <div class="setting-row">
       <span class="setting-label">每词朗读次数</span>
@@ -215,7 +215,7 @@ input:checked+.toggle-slider:before{transform:translateX(20px)}
     <p class="section-title">听写设置</p>
     <div class="setting-row">
       <span class="setting-label">朗读语音</span>
-      <select id="voice-sel"></select>
+      
     </div>
     <div class="setting-row">
       <span class="setting-label">每词朗读次数</span>
@@ -384,9 +384,7 @@ function startWrongDictation(){
   words=keys.slice(0,n);
   words=shuffle(words);
   isWrongMode=true;
-  // copy voice settings
-  const vs=$('voice-sel2');
-  voices=Array.from($('voice-sel2').options).map((_,i)=>speechSynthesis.getVoices().filter(v=>v.lang.startsWith('en'))[i]);
+  loadVoices('voice-sel2');
   startDictation(true);
 }
 
@@ -444,10 +442,10 @@ function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Mat
 
 function loadVoices(selId){
   const populate=()=>{
-    voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('en'));
-    if(!voices.length)voices=speechSynthesis.getVoices();
-    const sel=$(selId);sel.innerHTML='';
-    voices.forEach((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=v.name.replace(/\(.*?\)/g,'').trim().substring(0,22);sel.appendChild(o);});
+    const all=speechSynthesis.getVoices();
+    const moira=all.find(v=>v.name==='Moira');
+    voices=moira?[moira]:all.filter(v=>v.lang.startsWith('en'));
+    if(!voices.length)voices=all;
   };
   populate();speechSynthesis.onvoiceschanged=populate;
 }
@@ -480,8 +478,7 @@ function runCurrent(){
 function speak(word,onEnd){
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(word);
-  const vi=parseInt($(getVoiceSelId()).value)||0;
-  if(voices[vi])u.voice=voices[vi];
+  if(voices[0])u.voice=voices[0];
   u.rate=0.82;u.onend=onEnd||(()=>{});u.onerror=onEnd||(()=>{});
   speechSynthesis.speak(u);
 }
