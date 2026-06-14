@@ -204,8 +204,7 @@ input:checked+.toggle-slider:before{transform:translateX(20px)}
   <p class="page-title">单词列表</p>
   <p class="page-sub">确认后开始听写</p>
   <div class="card">
-    <p class="section-title">已识别单词 · <span id="word-count">0</span> 个</p>
-    <div id="word-tags" class="word-tags"></div>
+    <p class="section-title">已识别：单词 <span id="word-count">0</span> 个 · 短语 <span id="phrase-count">0</span> 个</p>
     <div class="add-row">
       <input id="new-word" type="text" placeholder="手动添加单词…" autocapitalize="none" autocorrect="off" spellcheck="false">
       <button onclick="addWord()">添加</button>
@@ -424,13 +423,10 @@ async function scanWords(){
 }
 
 function renderWords(){
-  const el=$('word-tags');el.innerHTML='';
-  $('word-count').textContent=words.length;
-  words.forEach((w,i)=>{
-    const t=document.createElement('span');t.className='word-tag';
-    t.innerHTML=`${w} <button class="del" onclick="delWord(${i})">×</button>`;
-    el.appendChild(t);
-  });
+  const phrases=words.filter(w=>w.trim().includes(' '));
+  const singles=words.filter(w=>!w.trim().includes(' '));
+  $('word-count').textContent=singles.length;
+  $('phrase-count').textContent=phrases.length;
 }
 function delWord(i){words.splice(i,1);renderWords();}
 function addWord(){const inp=$('new-word'),w=inp.value.trim().toLowerCase();if(w){words.push(w);renderWords();inp.value='';}}
