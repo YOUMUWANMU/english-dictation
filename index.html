@@ -411,7 +411,6 @@ async function scanWords(){
   $('scan-btn').disabled=true;$('error-box').style.display='none';$('loading-box').style.display='block';
   try{
     const src=$('preview').src,b64=src.split(',')[1],mime=src.split(';')[0].split(':')[1];
-    // 百度OCR - 获取token
     const tokenRes=await fetch('https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=8Glwyy98i6DuKgCHXlVk1l2B&client_secret=nfsBOBDSHcDEW6ky55SNblBH1PJfU3Gq',{method:'POST'});
     const tokenData=await tokenRes.json();
     const token=tokenData.access_token;
@@ -420,15 +419,9 @@ async function scanWords(){
     const ocrData=await ocrRes.json();
     if(!ocrData.words_result)throw new Error('OCR失败：'+(ocrData.error_msg||JSON.stringify(ocrData)));
     const allText=ocrData.words_result.map(w=>w.words).join(' ');
-    const matches=allText.match(/[a-zA-Z][a-zA-Z ](1, 40)(?=[^a-zA-Z]|$)/g)||[];
-    const cleaned=matches.map(s=>s.trim()).filter(s=>s.split(' ').length>=1&&s.length>1);
-    if(cleaned.length===0)throw new Error('未识别到英文，OCR结果：'+allText.substring(0,100));
-    const fakeFetch=()=>{}; fakeFetch
-    const raw=(data.candidates?.[0]?.content?.parts?.[0]?.text||'');
-    const match=raw.match(/\[.*?\]/s);
-    if(!match)throw new Error('未识别到单词，请确保图片清晰');
-    const arr=JSON.parse(match[0]);
-    if(!Array.isArray(arr)||arr.length===0)throw new Error('未识别到单词，请确保图片清晰');
+    const matches=allText.match(/[a-zA-Z][a-zA-Z ]{1,40}(?=[^a-zA-Z]|$)/g)||[];
+    const arr=matches.map(s=>s.trim()).filter(s=>s.length>1);
+    if(arr.length===0)throw new Error('未识别到英文，OCR结果：'+allText.substring(0,100));
     words=arr.filter(w=>typeof w==='string'&&w.trim()).map(w=>w.trim().toLowerCase());
     isWrongMode=false;
     renderWords();loadVoices('voice-sel');showScreen('s-words');
@@ -564,21 +557,6 @@ async function doCheck(){
   $('check-btn').disabled=true;$('check-error').style.display='none';$('check-loading').style.display='block';
   try{
     const src=$('check-preview').src,b64=src.split(',')[1],mime=src.split(';')[0].split(':')[1];
-    const wordList=dictationWords.join(', ');
-    const prompt=`这是一份英语听写答题纸的照片。
-本次听写的单词列表（按顺序）是：${wordList}
-
-请仔细识别图片中学生写下的每个单词，与正确单词对比，判断对错。
-注意：学生写的顺序可能和原来不一样（因为可能打乱了顺序），请根据内容匹配，不要依赖位置。
-
-请只返回如下JSON格式，不含其他文字：
-{
-  "results": [
-    {"word": "正确单词", "written": "学生写的", "correct": true或false},
-    ...
-  ]
-}
-对于图片中找不到对应单词的，written填"未作答"，correct填false。`;
     const tokenRes2=await fetch('https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=8Glwyy98i6DuKgCHXlVk1l2B&client_secret=nfsBOBDSHcDEW6ky55SNblBH1PJfU3Gq',{method:'POST'});
     const tokenData2=await tokenRes2.json();
     const token2=tokenData2.access_token;
@@ -586,16 +564,11 @@ async function doCheck(){
     const ocrRes2=await fetch('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token='+token2,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'image='+encodeURIComponent(b64)});
     const ocrData2=await ocrRes2.json();
     if(!ocrData2.words_result)throw new Error('OCR失败：'+(ocrData2.error_msg||'未知'));
-    const ocrText=ocrData2.words_result.map(w=>w.words).join('\n');
-    const wordList=dictationWords.join(', ');
-    // 用简单匹配判断每个单词是否在OCR结果里
+    const ocrText=ocrData2.words_result.map(w=>w.words).join(' ').toLowerCase();
     const results=dictationWords.map(word=>{
-      const written=word;
-      const correct=ocrText.toLowerCase().includes(word.toLowerCase());
+      const correct=ocrText.includes(word.toLowerCase());
       return {word,written:correct?word:'未找到',correct};
     });
-    const fakeParsed={results};
-    const txt=(data.candidates?.[0]?.content?.parts?.[0]?.text||'').replace(/```json|```/g,'').trim();
     // 渲染结果
     const wrongWords=results.filter(r=>!r.correct).map(r=>r.word);
     if(wrongWords.length>0){addToWrongLib(wrongWords);$('wrong-added-box').style.display='block';}
