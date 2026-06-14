@@ -420,9 +420,9 @@ async function scanWords(){
     const data=await res.json();
     const raw=(data.candidates?.[0]?.content?.parts?.[0]?.text||'');
     const match=raw.match(/\[.*?\]/s);
-    if(!match)throw new Error('未识别到单词，请确保图片清晰');
+    if(!match)throw new Error('Gemini返回：'+raw.substring(0,200));
     const arr=JSON.parse(match[0]);
-    if(!Array.isArray(arr)||arr.length===0)throw new Error('未识别到单词，请确保图片清晰');
+    if(!Array.isArray(arr)||arr.length===0)throw new Error('空数组，Gemini返回：'+raw.substring(0,200));
     words=arr.filter(w=>typeof w==='string'&&w.trim()).map(w=>w.trim().toLowerCase());
     isWrongMode=false;
     renderWords();loadVoices('voice-sel');showScreen('s-words');
