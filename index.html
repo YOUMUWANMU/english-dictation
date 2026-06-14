@@ -411,11 +411,7 @@ async function scanWords(){
   $('scan-btn').disabled=true;$('error-box').style.display='none';$('loading-box').style.display='block';
   try{
     const src=$('preview').src,b64=src.split(',')[1],mime=src.split(';')[0].split(':')[1];
-    const tokenRes=await fetch('https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=8Glwyy98i6DuKgCHXlVk1l2B&client_secret=nfsBOBDSHcDEW6ky55SNblBH1PJfU3Gq',{method:'POST'});
-    const tokenData=await tokenRes.json();
-    const token=tokenData.access_token;
-    if(!token)throw new Error('获取token失败:'+JSON.stringify(tokenData));
-    const ocrRes=await fetch('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token='+token,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'image='+encodeURIComponent(b64)});
+    const ocrRes=await fetch('https://baidu-ocr-proxy.zh08243080.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64})});
     const ocrData=await ocrRes.json();
     if(!ocrData.words_result)throw new Error('OCR失败：'+(ocrData.error_msg||JSON.stringify(ocrData)));
     const allText=ocrData.words_result.map(w=>w.words).join(' ');
@@ -557,11 +553,7 @@ async function doCheck(){
   $('check-btn').disabled=true;$('check-error').style.display='none';$('check-loading').style.display='block';
   try{
     const src=$('check-preview').src,b64=src.split(',')[1],mime=src.split(';')[0].split(':')[1];
-    const tokenRes2=await fetch('https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=8Glwyy98i6DuKgCHXlVk1l2B&client_secret=nfsBOBDSHcDEW6ky55SNblBH1PJfU3Gq',{method:'POST'});
-    const tokenData2=await tokenRes2.json();
-    const token2=tokenData2.access_token;
-    if(!token2)throw new Error('获取token失败');
-    const ocrRes2=await fetch('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token='+token2,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'image='+encodeURIComponent(b64)});
+    const ocrRes2=await fetch('https://baidu-ocr-proxy.zh08243080.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64})});
     const ocrData2=await ocrRes2.json();
     if(!ocrData2.words_result)throw new Error('OCR失败：'+(ocrData2.error_msg||'未知'));
     const ocrText=ocrData2.words_result.map(w=>w.words).join(' ').toLowerCase();
